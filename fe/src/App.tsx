@@ -1,35 +1,83 @@
-import { useState } from 'react'
-import reactLogo from './assets/react.svg'
-import viteLogo from '/vite.svg'
-import './App.css'
+import { useState } from "react";
+import "./App.css";
+import axios from "axios";
+
+type Response = {
+  sessionId: string;
+  result: string;
+};
 
 function App() {
-  const [count, setCount] = useState(0)
+  const [sessionId, setSessionId] = useState<string | null>(null);
+  const [currMessage, setCurrMessage] = useState("");
+  const [question, setQuestion] = useState("");
 
+  const getCurrentTabURL = async () => {
+    const [tab] = await chrome.tabs.query({
+      active: true,
+      lastFocusedWindow: true,
+    });
+    if (tab && tab.url) {
+      try {
+        const url = tab.url;
+        const response = await axios.post<Response>(
+          "http://localhost:3000/setreference",
+          {
+            url: url,
+          }
+        );
+        if (response.status !== 200) {
+          alert("Failed to set reference");
+        }
+        const data: Response = response.data;
+        setSessionId(data.sessionId);
+        setCurrMessage(data.result);
+        console.log("Axios test response:", data);
+        alert(JSON.stringify(response.data));
+      } catch (error) {
+        console.error("Axios test error:", error);
+        alert("Axios test failed.");
+      }
+    }
+  };
+
+  const askPageAi = async () => {
+    setCurrMessage("Asking Page.Ai...");
+    const response = await axios.post<{ answer: string }>(
+      "http://localhost:3000/ask",
+      {
+        sessionId,
+        question,
+      }
+    );
+    const data = response.data;
+    setCurrMessage(data.answer);
+  };
   return (
     <>
+      <h1>Welcome to AskPage.Ai</h1>
       <div>
-        <a href="https://vite.dev" target="_blank">
-          <img src={viteLogo} className="logo" alt="Vite logo" />
-        </a>
-        <a href="https://react.dev" target="_blank">
-          <img src={reactLogo} className="logo react" alt="React logo" />
-        </a>
+        {sessionId ? (
+          <div>
+            <div>{currMessage}</div>
+            <div>
+              <input
+                value={question}
+                onChange={(e) => {
+                  setQuestion(e.target.value);
+                }}
+                type="text"
+                placeholder="Ask a question..."
+              />
+              <button onClick={askPageAi}>Send</button>
+            </div>
+          </div>
+        ) : (
+          <button onClick={getCurrentTabURL}>Ask Page.Ai</button>
+        )}
       </div>
-      <h1>Vite + React</h1>
-      <div className="card">
-        <button onClick={() => setCount((count) => count + 1)}>
-          count is {count}
-        </button>
-        <p>
-          Edit <code>src/App.tsx</code> and save to test HMR
-        </p>
-      </div>
-      <p className="read-the-docs">
-        Click on the Vite and React logos to learn more
-      </p>
     </>
-  )
+  );
 }
 
-export default App
+export default App;

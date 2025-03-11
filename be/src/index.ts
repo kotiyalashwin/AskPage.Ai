@@ -26,7 +26,7 @@ app.post("/setreference", async (req, res) => {
   // const result = await model.generateContent(prompt);
   // const response = parseAIResult(result);
   sessionContext[sessionId] = pageData;
-  res.json({ result: "Reference Set", sessionId: sessionId });
+  res.status(200).json({ result: "Reference Set", sessionId: sessionId });
 });
 
 app.post("/ask", async (req, res) => {
