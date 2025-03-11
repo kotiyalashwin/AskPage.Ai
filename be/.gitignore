@@ -1,0 +1,6 @@
+node_modules
+dist
+src/utils/referencePrompt.ts
+src/utils/parseResult.ts
+
+.env
