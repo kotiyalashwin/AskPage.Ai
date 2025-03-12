@@ -1,6 +1,7 @@
 import { useState } from "react";
 import "./App.css";
 import axios from "axios";
+import { Chat } from "./components/Chat";
 
 type Response = {
   sessionId: string;
@@ -10,7 +11,6 @@ type Response = {
 function App() {
   const [sessionId, setSessionId] = useState<string | null>(null);
   const [currMessage, setCurrMessage] = useState("");
-  const [question, setQuestion] = useState("");
 
   const getCurrentTabURL = async () => {
     const [tab] = await chrome.tabs.query({
@@ -33,7 +33,6 @@ function App() {
         setSessionId(data.sessionId);
         setCurrMessage(data.result);
         console.log("Axios test response:", data);
-        alert(JSON.stringify(response.data));
       } catch (error) {
         console.error("Axios test error:", error);
         alert("Axios test failed.");
@@ -41,42 +40,35 @@ function App() {
     }
   };
 
-  const askPageAi = async () => {
-    setCurrMessage("Asking Page.Ai...");
-    const response = await axios.post<{ answer: string }>(
-      "http://localhost:3000/ask",
-      {
-        sessionId,
-        question,
-      }
-    );
-    const data = response.data;
-    setCurrMessage(data.answer);
-  };
   return (
-    <>
-      <h1>Welcome to AskPage.Ai</h1>
-      <div>
-        {sessionId ? (
-          <div>
-            <div>{currMessage}</div>
-            <div>
-              <input
-                value={question}
-                onChange={(e) => {
-                  setQuestion(e.target.value);
-                }}
-                type="text"
-                placeholder="Ask a question..."
-              />
-              <button onClick={askPageAi}>Send</button>
+    <div className="w-[400px] min-h-[500px] bg-[#0A0A0A] text-white flex flex-col  justify-center">
+      <div className="p-4">
+        <h1 className="text-2xl font-bold text-center mb-6 bg-gradient-to-r from-blue-400 to-purple-500 bg-clip-text text-transparent animate-gradient">
+          AskPage.AI
+        </h1>
+        <div className="rounded-xl overflow-hidden transition-all duration-300">
+          {sessionId ? (
+            <Chat sessionId={sessionId} initialMessage={currMessage} />
+          ) : (
+            <div className="flex flex-col items-center justify-center space-y-4 p-8">
+              <p className="text-gray-400 text-center mb-4">
+                Click below to analyze the current webpage and start asking
+                questions
+              </p>
+              <button
+                onClick={getCurrentTabURL}
+                className="w-full py-3 bg-gradient-to-r from-blue-500 to-purple-600 text-white rounded-lg 
+                hover:from-blue-600 hover:to-purple-700 transition-all duration-300 transform hover:scale-105
+                focus:outline-none focus:ring-2 focus:ring-purple-500 focus:ring-opacity-50
+                shadow-lg hover:shadow-xl font-medium"
+              >
+                Analyze Page
+              </button>
             </div>
-          </div>
-        ) : (
-          <button onClick={getCurrentTabURL}>Ask Page.Ai</button>
-        )}
+          )}
+        </div>
       </div>
-    </>
+    </div>
   );
 }
 

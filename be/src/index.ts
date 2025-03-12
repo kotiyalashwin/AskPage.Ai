@@ -22,9 +22,6 @@ app.post("/setreference", async (req, res) => {
   const sessionId = uuidv4();
 
   const pageData = await getWebpageContentForLLM(url);
-  // const prompt = refPrompt(pageData);
-  // const result = await model.generateContent(prompt);
-  // const response = parseAIResult(result);
   sessionContext[sessionId] = pageData;
   res.status(200).json({ result: "Reference Set", sessionId: sessionId });
 });
