@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import "./App.css";
 import axios from "axios";
 import { Chat } from "./components/Chat";
@@ -10,9 +10,19 @@ type Response = {
 
 function App() {
   const [sessionId, setSessionId] = useState<string | null>(null);
-  const [currMessage, setCurrMessage] = useState("");
+  const [currMessage, setCurrMessage] = useState("Reference Set");
+  const [isLoading, setIsLoading] = useState(false);
+
+  useEffect(() => {
+    chrome.storage.local.get("sessionId", (result) => {
+      if (result.sessionId) {
+        setSessionId(result.sessionId);
+      }
+    });
+  }, []);
 
   const getCurrentTabURL = async () => {
+    setIsLoading(true);
     const [tab] = await chrome.tabs.query({
       active: true,
       lastFocusedWindow: true,
@@ -31,6 +41,7 @@ function App() {
         }
         const data: Response = response.data;
         setSessionId(data.sessionId);
+        chrome.storage.local.set({ sessionId: data.sessionId });
         setCurrMessage(data.result);
         console.log("Axios test response:", data);
       } catch (error) {
@@ -62,7 +73,7 @@ function App() {
                 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:ring-opacity-50
                 shadow-lg hover:shadow-xl font-medium"
               >
-                Analyze Page
+                {isLoading ? "Analyzing page..." : "Analyze Page"}
               </button>
             </div>
           )}
