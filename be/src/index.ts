@@ -19,6 +19,7 @@ app.post("/setreference", setReference);
 
 app.post("/ask", async (req, res) => {
   console.log("Current Record:", sessionContext);
+  const suggestion = (req.query.globalsearch as string) || undefined;
   const { sessionId, question } = req.body;
   if (!sessionId) {
     res.json({ message: "SessionId is required" });
@@ -29,7 +30,7 @@ app.post("/ask", async (req, res) => {
     res.json({ message: "No context for this session" });
     return;
   }
-  const askPrompt = getAskPrompt(context, question);
+  const askPrompt = getAskPrompt(context, question, suggestion);
   const result = await model.generateContent(askPrompt);
   res.json({ answer: result.response.text() });
 });
