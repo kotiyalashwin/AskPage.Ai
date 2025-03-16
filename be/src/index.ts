@@ -22,6 +22,10 @@ app.post("/setreference", async (req, res) => {
   const sessionId = uuidv4();
 
   const pageData = await getWebpageContentForLLM(url);
+  if (pageData === "Privacy policy restricts this Page to be scrapped") {
+    res.status(201).json({ result: pageData });
+    return;
+  }
   sessionContext[sessionId] = pageData;
   res.status(200).json({ result: "Reference Set", sessionId: sessionId });
 });

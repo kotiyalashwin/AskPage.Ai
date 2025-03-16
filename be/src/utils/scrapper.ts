@@ -1,8 +1,31 @@
 import axios from "axios";
 import * as cheerio from "cheerio";
 
+const checkForAuth = async (url: string) => {
+  try {
+    const response = await axios.get(url);
+    const $ = cheerio.load(response.data as string);
+
+    if (
+      $("title").text().toLowerCase().includes("login") ||
+      $("title").text().toLowerCase().includes("signup") ||
+      $("title").text().toLowerCase().includes("signin")
+    ) {
+      return true;
+    }
+    return false;
+  } catch {
+    return true;
+  }
+};
+
 export async function getWebpageContentForLLM(url: string) {
   try {
+    const authRequired = await checkForAuth(url);
+
+    if (authRequired) {
+      throw new Error();
+    }
     const response = await axios.get(url);
     const $ = cheerio.load(response.data as string);
 
@@ -37,7 +60,7 @@ export async function getWebpageContentForLLM(url: string) {
     const pageText = mainContent.text().replace(/\s+/g, " ").trim();
     return pageText;
   } catch (error) {
-    console.error("Error fetching or parsing the page:", error);
-    return null;
+    // console.error("Error fetching or parsing the page:", error);
+    return "Privacy policy restricts this Page to be scrapped";
   }
 }

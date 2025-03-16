@@ -12,6 +12,7 @@ function App() {
   const [sessionId, setSessionId] = useState<string | null>(null);
   const [currMessage, setCurrMessage] = useState("Reference Set");
   const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState(false);
 
   useEffect(() => {
     chrome.storage.local.get("sessionId", (result) => {
@@ -37,7 +38,8 @@ function App() {
           }
         );
         if (response.status !== 200) {
-          alert("Failed to set reference");
+          setCurrMessage(response.data?.result);
+          setError(true);
         }
         const data: Response = response.data;
         setSessionId(data.sessionId);
@@ -62,19 +64,28 @@ function App() {
             <Chat sessionId={sessionId} initialMessage={currMessage} />
           ) : (
             <div className="flex flex-col items-center justify-center space-y-4 p-8">
-              <p className="text-gray-400 text-center mb-4">
-                Click below to analyze the current webpage and start asking
-                questions
-              </p>
-              <button
-                onClick={getCurrentTabURL}
-                className="w-full py-3 bg-gradient-to-r from-blue-500 to-purple-600 text-white rounded-lg 
+              {error ? (
+                <>
+                  <p>{currMessage}</p>
+                  <p className="underline">Use me on Public pages.</p>
+                </>
+              ) : (
+                <>
+                  <p className="text-gray-400 text-center mb-4">
+                    Click below to analyze the current webpage and start asking
+                    questions
+                  </p>
+                  <button
+                    onClick={getCurrentTabURL}
+                    className="w-full py-3 bg-gradient-to-r from-blue-500 to-purple-600 text-white rounded-lg 
                 hover:from-blue-600 hover:to-purple-700 transition-all duration-300 transform hover:scale-105
                 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:ring-opacity-50
                 shadow-lg hover:shadow-xl font-medium"
-              >
-                {isLoading ? "Analyzing page..." : "Analyze Page"}
-              </button>
+                  >
+                    {isLoading ? "Analyzing page..." : "Analyze Page"}
+                  </button>
+                </>
+              )}
             </div>
           )}
         </div>
