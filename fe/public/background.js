@@ -1,8 +1,32 @@
 chrome.tabs.onUpdated.addListener((_tabId, changeInfo) => {
   if (changeInfo.url) {
-    // Clear local storage when the URL of the active tab changes
-    chrome.storage.local.clear(() => {
-      console.log("Local storage cleared due to URL change.");
+    chrome.storage.local.get("sessionId", (result) => {
+      const sessionId = result.sessionId;
+
+      if (sessionId) {
+        fetch(`http://localhost:3000/clearsession?sessionId=${sessionId}`, {
+          method: "DELETE",
+        })
+          .then((response) => {
+            if (response.ok) {
+              console.log("Backend delete request successful (on URL change).");
+            } else {
+              console.error(
+                "Backend delete request failed (on URL change):",
+                response.status
+              );
+            }
+          })
+          .catch((error) => {
+            console.error(
+              "Error sending backend delete request (on URL change):",
+              error
+            );
+          });
+      }
+      chrome.storage.local.clear(() => {
+        console.log("Local storage cleared due to URL change.");
+      });
     });
   }
 });
@@ -10,9 +34,35 @@ chrome.tabs.onUpdated.addListener((_tabId, changeInfo) => {
 chrome.tabs.onActivated.addListener((activeInfo) => {
   chrome.tabs.get(activeInfo.tabId, (tab) => {
     if (tab.url) {
-      // Clear local storage when the active tab changes
-      chrome.storage.local.clear(() => {
-        console.log("Local storage cleared due to tab change.");
+      chrome.storage.local.get("sessionId", (result) => {
+        const sessionId = result.sessionId;
+
+        if (sessionId) {
+          fetch(`http://localhost:3000/clearsession?sessionId=${sessionId}`, {
+            method: "DELETE",
+          })
+            .then((response) => {
+              if (response.ok) {
+                console.log(
+                  "Backend delete request successful (on tab change)."
+                );
+              } else {
+                console.error(
+                  "Backend delete request failed (on tab change):",
+                  response.status
+                );
+              }
+            })
+            .catch((error) => {
+              console.error(
+                "Error sending backend delete request (on tab change):",
+                error
+              );
+            });
+        }
+        chrome.storage.local.clear(() => {
+          console.log("Local storage cleared due to tab change.");
+        });
       });
     }
   });

@@ -1,36 +1,24 @@
 import express from "express";
 import dotenv from "dotenv";
 import { GoogleGenerativeAI } from "@google/generative-ai";
-import { getWebpageContentForLLM } from "./utils/scrapper";
-import { refPrompt } from "./utils/referencePrompt";
-import { parseAIResult } from "./utils/parseResult";
-import { v4 as uuidv4 } from "uuid";
 import { getAskPrompt } from "./utils/askPrompt";
-
+import { setReference } from "./controller/setReference";
+import { clrSession } from "./controller/clearSession";
 dotenv.config();
 const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY as string);
 const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
 const app = express();
 app.use(express.json());
+type sessionContextRecord = Record<string, string>;
+export const sessionContext: sessionContextRecord = {};
+// const sessionContext: {
+//   [sessionId: string]: string | null;
+// } = {};
 
-const sessionContext: {
-  [sessionId: string]: string | null;
-} = {};
-
-app.post("/setreference", async (req, res) => {
-  const { url } = req.body;
-  const sessionId = uuidv4();
-
-  const pageData = await getWebpageContentForLLM(url);
-  if (pageData === "Privacy policy restricts this Page to be scrapped") {
-    res.status(201).json({ result: pageData });
-    return;
-  }
-  sessionContext[sessionId] = pageData;
-  res.status(200).json({ result: "Reference Set", sessionId: sessionId });
-});
+app.post("/setreference", setReference);
 
 app.post("/ask", async (req, res) => {
+  console.log("Current Record:", sessionContext);
   const { sessionId, question } = req.body;
   if (!sessionId) {
     res.json({ message: "SessionId is required" });
@@ -45,6 +33,8 @@ app.post("/ask", async (req, res) => {
   const result = await model.generateContent(askPrompt);
   res.json({ answer: result.response.text() });
 });
+
+app.delete("/clearsession", clrSession);
 
 app.listen(3000, () => {
   console.log("Server is running on port 3000");
