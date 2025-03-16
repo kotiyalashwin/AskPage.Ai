@@ -2,6 +2,7 @@ import { useState, useEffect, useRef } from "react";
 import axios from "axios";
 import { extractCommands } from "../utils/extractCommands";
 import { Terminal } from "./Terminal";
+import { Globe } from "lucide-react";
 
 interface ChatProps {
   sessionId: string;
@@ -19,7 +20,12 @@ interface Message {
 export function Chat({ sessionId, initialMessage }: ChatProps) {
   const [messages, setMessages] = useState<Message[]>([]);
   const [question, setQuestion] = useState("");
+  const [globalsearch, setGlobalSearch] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
+
+  const toggleGLobalSearch = () => {
+    setGlobalSearch((s) => !s);
+  };
 
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
@@ -82,7 +88,7 @@ export function Chat({ sessionId, initialMessage }: ChatProps) {
 
     try {
       const response = await axios.post<{ answer: string }>(
-        "http://localhost:3000/ask",
+        `http://localhost:3000/ask?globalsearch=${globalsearch}`,
         {
           sessionId,
           question: userMessage.text,
@@ -216,6 +222,9 @@ export function Chat({ sessionId, initialMessage }: ChatProps) {
       </div>
       <div className="border-t border-gray-800 p-4 bg-[#0A0A0A]">
         <div className="flex space-x-2">
+          <button onClick={toggleGLobalSearch}>
+            <Globe fill={globalsearch ? "blue" : ""} />
+          </button>
           <input
             value={question}
             onChange={(e) => setQuestion(e.target.value)}
