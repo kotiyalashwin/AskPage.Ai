@@ -1,34 +1,39 @@
-import express from "express";
+import express, { Request } from "express";
 import dotenv from "dotenv";
+import cookiePaser from "cookie-parser";
 import { GoogleGenerativeAI } from "@google/generative-ai";
-import { getAskPrompt } from "./utils/askPrompt";
-import { setReference } from "./controller/setReference";
-import { clrSession } from "./controller/clearSession";
+import { getAskPrompt } from "./utils/askPrompt.js";
+import { setReference } from "./controller/setReference.js";
+import { clrSession } from "./controller/clearSession.js";
+import { Verify } from "./controller/verify.js";
+import { authenticateJWT } from "./utils/decode.js";
 dotenv.config();
 const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY as string);
 const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
 const app = express();
 app.use(express.json());
+app.use(cookiePaser());
 type sessionContextRecord = Record<string, string>;
 export const sessionContext: sessionContextRecord = {};
 // const sessionContext: {
-//   [sessionId: string]: string | null;
+//   [sessionId: string]:
+// string | null;
 // } = {};
 
 app.post("/setreference", setReference);
 
 app.post("/ask", async (req, res) => {
-  console.log("Current Record:", sessionContext);
+  // console.log("Current Record:", sessionContext);
   const suggestion = (req.query.globalsearch as string) || "false";
   console.log(suggestion);
   const { sessionId, question } = req.body;
   if (!sessionId) {
-    res.json({ message: "SessionId is required" });
+    res.status(201).json({ message: "SessionId is required" });
     return;
   }
   const context = sessionContext[sessionId];
   if (!context) {
-    res.json({ message: "No context for this session" });
+    res.status(201).json({ message: "No context for this session" });
     return;
   }
   const askPrompt = getAskPrompt(context, question, suggestion);
@@ -39,6 +44,8 @@ app.post("/ask", async (req, res) => {
 
 app.delete("/clearsession", clrSession);
 
-app.listen(3000, () => {
+app.post("/verify", authenticateJWT, Verify);
+
+app.listen(8080, () => {
   console.log("Server is running on port 3000");
 });

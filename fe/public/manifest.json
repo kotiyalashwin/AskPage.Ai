@@ -3,11 +3,11 @@
   "name": "AskPage.Ai",
   "version": "1.0",
   "description": "A simple extension",
-  "permissions": ["activeTab", "scripting", "tabs", "storage"],
+  "permissions": ["activeTab", "scripting", "tabs", "storage", "cookies"],
   "action": {
     "default_popup": "index.html"
   },
-  "host_permissions": ["http://*/*", "https://*/*"],
+  "host_permissions": ["http://*/*", "https://*/*", "http://localhost:3000/*"],
   "background": {
     "service_worker": "background.js",
     "type": "module"

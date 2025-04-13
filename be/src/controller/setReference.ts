@@ -1,7 +1,7 @@
 import type { Request, Response } from "express";
-import { getWebpageContentForLLM } from "../utils/scrapper";
+import { getWebpageContentForLLM } from "../utils/scrapper.js";
 import { v4 as uuidv4 } from "uuid";
-import { sessionContext } from "..";
+import { sessionContext } from "../index.js";
 
 export const setReference = async (req: Request, res: Response) => {
   const { url } = req.body;

@@ -1,5 +1,5 @@
 import type { Request, Response } from "express";
-import { sessionContext } from "..";
+import { sessionContext } from "../index.js";
 
 export const clrSession = async (req: Request, res: Response) => {
   try {
