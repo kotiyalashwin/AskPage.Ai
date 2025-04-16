@@ -1,66 +1,136 @@
 import axios from "axios";
+
 import * as cheerio from "cheerio";
 
-const checkForAuth = async (url: string) => {
-  try {
-    const response = await axios.get(url);
-    const $ = cheerio.load(response.data as string);
+interface ScrapedContent {
+  title: string;
+  description: string;
+  headings: string[];
+  mainText: string;
+  fullText: string;
+}
 
-    if (
-      $("title").text().toLowerCase().includes("login") ||
-      $("title").text().toLowerCase().includes("signup") ||
-      $("title").text().toLowerCase().includes("signin")
-    ) {
-      return true;
-    }
-    return false;
-  } catch {
+// Helper function to check if page requires authentication
+const checkForAuth = async (url: string): Promise<boolean> => {
+  try {
+    const response = await axios.get(url, {
+      timeout: 5000,
+      headers: {
+        "User-Agent":
+          "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36",
+      },
+    });
+
+    const $ = cheerio.load(response.data as string);
+    const title = $("title").text().toLowerCase();
+    const authIndicators = [
+      "login",
+      "signup",
+      "signin",
+      "authenticate",
+      "auth",
+    ];
+
+    return authIndicators.some((indicator) => title.includes(indicator));
+  } catch (error) {
     return true;
   }
 };
 
-export async function getWebpageContentForLLM(url: string) {
+// Helper function to clean and normalize text
+const cleanText = (text: string): string => {
+  return text
+    .replace(/\s+/g, " ") // Replace multiple spaces with single space
+    .replace(/[\n\t]/g, " ") // Replace newlines and tabs with spaces
+    .replace(/[^\w\s.,!?;:'"-]/g, "") // Remove special characters except basic punctuation
+    .trim();
+};
+
+export async function getWebpageContentForLLM(url: string): Promise<string> {
   try {
-    const authRequired = await checkForAuth(url);
-
-    if (authRequired) {
-      throw new Error();
-    }
-    const response = await axios.get(url);
-    const $ = cheerio.load(response.data as string);
-
-    let mainContent = $(
-      "main, article, .content, .article, .post, .main-content, .page-content, #content, #article, #main-content"
-    );
-
-    if (mainContent.length === 0) {
-      // Fallback: Remove common non-content elements
-      mainContent = $("body")
-        .clone()
-        .find(
-          "nav, footer, aside, header, script, style, form, button, input, iframe, video, audio, picture, svg"
-        )
-        .remove();
+    // Validate URL format
+    if (!url.match(/^https?:\/\//i)) {
+      throw new Error("Invalid URL format");
     }
 
-    if (mainContent.length === 0) {
-      // Fallback: find the div that contains the most paragraphs.
-      let maxParagraphs = 0;
-      let maxParagraphDiv = $("body");
-      $("div").each((index, element) => {
-        const paragraphCount = $(element).find("p").length;
-        if (paragraphCount > maxParagraphs) {
-          maxParagraphs = paragraphCount;
-          maxParagraphDiv = $(element);
-        }
-      });
-      mainContent = maxParagraphDiv;
+    // const authRequired = await checkForAuth(url);
+    // if (authRequired) {
+    //   throw new Error("Authentication required");
+    // }
+
+    const response = await axios.get<string>(url, {
+      headers: {
+        "User-Agent":
+          "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36",
+      },
+      responseType: "text",
+    });
+
+    // Load HTML into cheerio
+    // @ts-ignore
+    const $ = cheerio.load(response.data);
+
+    // Check for these elements in order of priority
+    const selectors = [
+      "main", // HTML5 <main> element
+      "div#main", // Div with id="main"
+      '[role="main"]', // ARIA role="main"
+      "body", // Fallback to entire body
+    ];
+
+    let mainContent = null;
+    // Find the first matching element
+    for (const selector of selectors) {
+      mainContent = $(selector).first();
+      if (mainContent.length > 0) {
+        console.log(`Found content using selector: ${selector}`);
+        break;
+      }
     }
 
-    const pageText = mainContent.text().replace(/\s+/g, " ").trim();
-    return pageText;
-  } catch (error) {
-    // console.error("Error fetching or parsing the page:", error);
-    return "Privacy policy restricts this Page to be scrapped";
+    // If no content found (shouldn't happen with body fallback)
+    if (!mainContent || mainContent.length === 0) {
+      throw new Error("No main content element found");
+    }
+
+    // Elements to remove (extend as needed)
+    const elementsToRemove = [
+      "script",
+      "style",
+      "noscript",
+      "iframe",
+      "img",
+      "svg",
+      "figure",
+      "form",
+      "header",
+      "footer",
+      "nav",
+      "aside",
+      "link",
+      "meta",
+      "button",
+      "input",
+    ];
+
+    // Remove non-text elements
+    mainContent.find(elementsToRemove.join(",")).remove();
+
+    // Get all text content
+    let textContent = mainContent.text();
+
+    // Clean up the text
+    textContent = textContent
+      .replace(/\s+/g, " ") // Collapse multiple spaces
+      .replace(/\n+/g, "\n") // Collapse multiple newlines
+      .replace(/^\s+|\s+$/g, "") // Trim each line
+      .trim();
+
+    return textContent;
+  } catch (error: unknown) {
+    const errorMessage =
+      error instanceof Error ? error.message : "Unknown error occurred";
+    console.error(`Error scraping ${url}:`, errorMessage);
+    return "Unable to retrieve content from this page";
   }
 }

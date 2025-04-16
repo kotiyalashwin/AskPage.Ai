@@ -4,7 +4,7 @@ chrome.tabs.onUpdated.addListener((_tabId, changeInfo) => {
       const sessionId = result.sessionId;
 
       if (sessionId) {
-        fetch(`http://localhost:3000/clearsession?sessionId=${sessionId}`, {
+        fetch(`http://localhost:8080/clearsession?sessionId=${sessionId}`, {
           method: "DELETE",
         })
           .then((response) => {
@@ -38,7 +38,7 @@ chrome.tabs.onActivated.addListener((activeInfo) => {
         const sessionId = result.sessionId;
 
         if (sessionId) {
-          fetch(`http://localhost:3000/clearsession?sessionId=${sessionId}`, {
+          fetch(`http://localhost:8080/clearsession?sessionId=${sessionId}`, {
             method: "DELETE",
           })
             .then((response) => {

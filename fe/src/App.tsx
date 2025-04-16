@@ -38,7 +38,7 @@ function App() {
             credentials: "include",
           });
 
-          if (apiResponse.ok) {
+          if (apiResponse.status === 200) {
             setAuthentication(true); // console.log("API Response:", responseData);
           }
 
@@ -64,34 +64,123 @@ function App() {
     });
   }, []);
 
+  // const getCurrentTabURL = async () => {
+  //   console.log("entered analyze fn");
+  //   setIsLoading(true);
+  //   const [tab] = await chrome.tabs.query({
+  //     active: true,
+  //     lastFocusedWindow: true,
+  //     currentWindow: true,
+  //   });
+  //   if (tab && tab.url) {
+  //     console.log("sending request");
+  //     try {
+  //       const url = tab.url;
+  //       const response = await axios.post<Response>(
+  //         "http://localhost:8080/setreference",
+  //         {
+  //           url: url,
+  //         }
+  //       );
+  //       console.log("Request Sent");
+  //       if (response.status !== 200) {
+  //         console.log(response);
+  //         setCurrMessage(response.data?.result);
+  //         setError(true);
+  //       }
+  //       const data: Response = response.data;
+  //       setSessionId(data.sessionId);
+  //       chrome.storage.local.set({ sessionId: data.sessionId });
+  //       setCurrMessage(data.result);
+  //       setIsLoading(false);
+  //       console.log("Axios test response:", data);
+  //     } catch (error) {
+  //       console.error("Axios test error:", error);
+  //       alert("Axios test failed.");
+  //       setIsLoading(false);
+  //     }
+  //   }
+  // };
+
   const getCurrentTabURL = async () => {
+    console.log("[1] Entered analyze function");
     setIsLoading(true);
-    const [tab] = await chrome.tabs.query({
-      active: true,
-      lastFocusedWindow: true,
-    });
-    if (tab && tab.url) {
-      try {
-        const url = tab.url;
-        const response = await axios.post<Response>(
-          "http://localhost:3000/setreference",
-          {
-            url: url,
-          }
-        );
-        if (response.status !== 200) {
-          setCurrMessage(response.data?.result);
-          setError(true);
-        }
-        const data: Response = response.data;
-        setSessionId(data.sessionId);
-        chrome.storage.local.set({ sessionId: data.sessionId });
-        setCurrMessage(data.result);
-        console.log("Axios test response:", data);
-      } catch (error) {
-        console.error("Axios test error:", error);
-        alert("Axios test failed.");
+    setError(false);
+
+    try {
+      console.log("[2] Querying current tab...");
+      const [tab] = await chrome.tabs.query({
+        active: true,
+        currentWindow: true, // Changed from lastFocusedWindow to currentWindow
+      });
+
+      if (!tab) {
+        console.error("[ERROR] No active tab found");
+        setCurrMessage("No active tab found - please try again");
+        setError(true);
+        setIsLoading(false);
+        return;
       }
+
+      console.log("[3] Current tab:", tab);
+      console.log("[4] Tab URL:", tab.url);
+
+      if (!tab.url) {
+        console.error("[ERROR] Tab has no URL");
+        setCurrMessage("Cannot analyze this page - no URL found");
+        setError(true);
+        setIsLoading(false);
+        return;
+      }
+
+      // Skip chrome:// and similar URLs
+      if (
+        tab.url.startsWith("chrome://") ||
+        tab.url.startsWith("edge://") ||
+        tab.url.startsWith("about:")
+      ) {
+        console.error("[ERROR] Restricted URL:", tab.url);
+        setCurrMessage("Cannot analyze browser internal pages");
+        setError(true);
+        setIsLoading(false);
+        return;
+      }
+
+      console.log("[5] Sending request to backend...");
+      const response = await axios.post<Response>(
+        "http://localhost:8080/setreference",
+        { url: tab.url },
+        {
+          timeout: 10000, // 10 second timeout
+          headers: {
+            "Content-Type": "application/json",
+          },
+        }
+      );
+
+      console.log("[6] Backend response received:", response);
+
+      if (response.status !== 200) {
+        console.error("[ERROR] Non-200 response:", response.status);
+        setCurrMessage(response.data?.result || "Analysis failed");
+        setError(true);
+        setIsLoading(false);
+        return;
+      }
+
+      const data: Response = response.data;
+      console.log("[7] Response data:", data);
+
+      setSessionId(data.sessionId);
+      chrome.storage.local.set({ sessionId: data.sessionId });
+      setCurrMessage(data.result);
+      console.log("[8] Analysis completed successfully");
+    } catch (error) {
+      console.error("[FULL ERROR] Analysis failed:", error);
+      setError(true);
+    } finally {
+      setIsLoading(false);
+      console.log("[9] Final cleanup complete");
     }
   };
 

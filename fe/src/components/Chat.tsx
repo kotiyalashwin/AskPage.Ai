@@ -1,7 +1,5 @@
 import { useState, useEffect, useRef } from "react";
 import axios from "axios";
-import { extractCommands } from "../utils/extractCommands";
-import { Terminal } from "./Terminal";
 import { Globe } from "lucide-react";
 
 interface ChatProps {
@@ -88,7 +86,7 @@ export function Chat({ sessionId, initialMessage }: ChatProps) {
 
     try {
       const response = await axios.post<{ answer: string }>(
-        `http://localhost:3000/ask?globalsearch=${globalsearch}`,
+        `http://localhost:8080/ask?globalsearch=${globalsearch}`,
         {
           sessionId,
           question: userMessage.text,
@@ -127,12 +125,11 @@ export function Chat({ sessionId, initialMessage }: ChatProps) {
   };
 
   const renderMessageContent = (message: Message) => {
-    const { commands, remainingText } = extractCommands(message.text);
+    const remainingText = message.text;
 
     return (
       <div>
         <p>{remainingText}</p>
-        {commands.length > 0 && <Terminal commands={commands} />}
       </div>
     );
   };

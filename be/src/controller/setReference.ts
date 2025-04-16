@@ -7,6 +7,7 @@ export const setReference = async (req: Request, res: Response) => {
   const { url } = req.body;
   const sessionId = uuidv4();
 
+  //use prisma instead of sessions
   const pageData = await getWebpageContentForLLM(url);
   if (pageData === "Privacy policy restricts this Page to be scrapped") {
     res.status(201).json({ result: pageData });

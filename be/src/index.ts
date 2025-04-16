@@ -15,17 +15,18 @@ app.use(express.json());
 app.use(cookiePaser());
 type sessionContextRecord = Record<string, string>;
 export const sessionContext: sessionContextRecord = {};
-// const sessionContext: {
-//   [sessionId: string]:
-// string | null;
-// } = {};
 
 app.post("/setreference", setReference);
 
 app.post("/ask", async (req, res) => {
   // console.log("Current Record:", sessionContext);
-  const suggestion = (req.query.globalsearch as string) || "false";
+  const globalsearch = req.query.globalsearch as string;
+  let suggestion = false;
+  if (globalsearch === "true") {
+    suggestion = true;
+  }
   console.log(suggestion);
+  console.log(sessionContext);
   const { sessionId, question } = req.body;
   if (!sessionId) {
     res.status(201).json({ message: "SessionId is required" });
@@ -47,5 +48,5 @@ app.delete("/clearsession", clrSession);
 app.post("/verify", authenticateJWT, Verify);
 
 app.listen(8080, () => {
-  console.log("Server is running on port 3000");
+  console.log("Server is running on port 8080");
 });
