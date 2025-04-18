@@ -2,14 +2,6 @@ import axios from "axios";
 
 import * as cheerio from "cheerio";
 
-interface ScrapedContent {
-  title: string;
-  description: string;
-  headings: string[];
-  mainText: string;
-  fullText: string;
-}
-
 // Helper function to check if page requires authentication
 const checkForAuth = async (url: string): Promise<boolean> => {
   try {
@@ -37,15 +29,7 @@ const checkForAuth = async (url: string): Promise<boolean> => {
   }
 };
 
-// Helper function to clean and normalize text
-const cleanText = (text: string): string => {
-  return text
-    .replace(/\s+/g, " ") // Replace multiple spaces with single space
-    .replace(/[\n\t]/g, " ") // Replace newlines and tabs with spaces
-    .replace(/[^\w\s.,!?;:'"-]/g, "") // Remove special characters except basic punctuation
-    .trim();
-};
-
+//Scrapping function
 export async function getWebpageContentForLLM(url: string): Promise<string> {
   try {
     // Validate URL format
@@ -53,10 +37,10 @@ export async function getWebpageContentForLLM(url: string): Promise<string> {
       throw new Error("Invalid URL format");
     }
 
-    // const authRequired = await checkForAuth(url);
-    // if (authRequired) {
-    //   throw new Error("Authentication required");
-    // }
+    const authRequired = await checkForAuth(url);
+    if (authRequired) {
+      throw new Error("Authentication required");
+    }
 
     const response = await axios.get<string>(url, {
       headers: {
@@ -131,6 +115,6 @@ export async function getWebpageContentForLLM(url: string): Promise<string> {
     const errorMessage =
       error instanceof Error ? error.message : "Unknown error occurred";
     console.error(`Error scraping ${url}:`, errorMessage);
-    return "Unable to retrieve content from this page";
+    return "Privacy policy restricts this Page to be scrapped";
   }
 }

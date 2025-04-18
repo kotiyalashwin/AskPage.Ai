@@ -6,7 +6,7 @@ import { getAskPrompt } from "./utils/askPrompt.js";
 import { setReference } from "./controller/setReference.js";
 import { clrSession } from "./controller/clearSession.js";
 import { Verify } from "./controller/verify.js";
-import { authenticateJWT } from "./utils/decode.js";
+import { authenticateJWT } from "./middleware/decode.js";
 dotenv.config();
 const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY as string);
 const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
@@ -16,7 +16,7 @@ app.use(cookiePaser());
 type sessionContextRecord = Record<string, string>;
 export const sessionContext: sessionContextRecord = {};
 
-app.post("/setreference", setReference);
+app.post("/setreference", authenticateJWT, setReference);
 
 app.post("/ask", async (req, res) => {
   // console.log("Current Record:", sessionContext);

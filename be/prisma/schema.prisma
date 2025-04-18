@@ -13,15 +13,42 @@ model User {
   password      String?
   provider      Provider
   platformToken String?  @unique
+  planId        String
+  usedRequest   Int      @default(0)
+  URLS          URLS[]
+  Plan          Plan     @relation(fields: [planId], references: [id])
 }
 
-enum Plan {
-  Free
-  Pro
-  Premium
+model Plan {
+  id           String   @id
+  name         PlanType @unique
+  description  String
+  price        Int
+  totalRequest Int
+  features     Json
+  User         User[]
+}
+
+model URLS {
+  id     Int    @id @default(autoincrement())
+  url    String
+  userId Int
+  status Status
+  User   User   @relation(fields: [userId], references: [id])
 }
 
 enum Provider {
   Google
   Credentials
+}
+
+enum PlanType {
+  Free
+  Pro
+  Premium
+}
+
+enum Status {
+  Success
+  Failed
 }
