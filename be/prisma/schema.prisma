@@ -15,6 +15,7 @@ model User {
   platformToken String?  @unique
   planId        String
   usedRequest   Int      @default(0)
+  Chats         Chats[]
   URLS          URLS[]
   Plan          Plan     @relation(fields: [planId], references: [id])
 }
@@ -35,6 +36,14 @@ model URLS {
   userId Int
   status Status
   User   User   @relation(fields: [userId], references: [id])
+}
+
+model Chats {
+  id       Int      @id @default(autoincrement())
+  savedAt  DateTime @default(now())
+  history  Json
+  usermail String
+  User     User     @relation(fields: [usermail], references: [email])
 }
 
 enum Provider {

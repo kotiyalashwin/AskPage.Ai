@@ -15,7 +15,9 @@ export const authenticateJWT = async (
       secret: process.env.AUTH_SECRET as string,
       salt: "authjs.session-token",
     });
+
     (req as any).auth = decoded;
+
     next();
   } catch (error) {
     console.log("Failed to authenticate", error);

@@ -7,6 +7,7 @@ import { setReference } from "./controller/setReference.js";
 import { clrSession } from "./controller/clearSession.js";
 import { Verify } from "./controller/verify.js";
 import { authenticateJWT } from "./middleware/decode.js";
+import { SaveChat } from "./controller/chat.js";
 dotenv.config();
 const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY as string);
 const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
@@ -46,6 +47,8 @@ app.post("/ask", async (req, res) => {
 app.delete("/clearsession", clrSession);
 
 app.post("/verify", authenticateJWT, Verify);
+
+app.post("/savechat", authenticateJWT, SaveChat);
 
 app.listen(8080, () => {
   console.log("Server is running on port 8080");

@@ -21,6 +21,19 @@ export function Chat({ sessionId, initialMessage }: ChatProps) {
   const [globalsearch, setGlobalSearch] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
+  const savechat = async () => {
+    try {
+      console.log(messages);
+      const response = await axios.post(
+        "http://localhost:8080/savechat",
+        messages
+      );
+      console.log(response.data);
+    } catch (e) {
+      console.log(e);
+    }
+  };
+
   const toggleGLobalSearch = () => {
     setGlobalSearch((s) => !s);
   };
@@ -243,6 +256,21 @@ export function Chat({ sessionId, initialMessage }: ChatProps) {
             Send
           </button>
         </div>
+
+        {messages && (
+          <div className="flex justify-center ">
+            <button
+              disabled={messages.length === 1}
+              className={`   mt-2 text-center px-6 py-2 bg-gradient-to-r from-blue-500 to-purple-600 text-white rounded-full
+              hover:from-blue-600 hover:to-purple-700 transition-all duration-300 transform hover:scale-105
+              disabled:from-gray-700 disabled:to-gray-700 disabled:text-gray-500 disabled:cursor-not-allowed
+              disabled:hover:scale-100 focus:outline-none focus:ring-2 focus:ring-purple-500`}
+              onClick={savechat}
+            >
+              Save this chat
+            </button>
+          </div>
+        )}
       </div>
     </div>
   );

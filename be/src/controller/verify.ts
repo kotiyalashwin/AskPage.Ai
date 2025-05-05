@@ -4,6 +4,10 @@ import prisma from "../lib/db.js";
 export const Verify = async (req: Request, res: Response) => {
   try {
     const auth = (req as any).auth;
+    if (!auth || !auth.email) {
+      res.status(401).json("Not Verified");
+      return;
+    }
 
     const token = await prisma.user.findFirst({
       where: {
