@@ -1,0 +1,1 @@
+{"root":["./src/index.ts","./src/controller/chat.ts","./src/controller/clearSession.ts","./src/controller/setReference.ts","./src/controller/verify.ts","./src/lib/db.ts","./src/middleware/decode.ts","./src/utils/askPrompt.ts","./src/utils/scrapper.ts"],"version":"5.8.3"}

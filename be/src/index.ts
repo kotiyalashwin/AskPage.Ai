@@ -1,4 +1,4 @@
-import express, { Request } from "express";
+import express from "express";
 import dotenv from "dotenv";
 import cookiePaser from "cookie-parser";
 import { GoogleGenerativeAI } from "@google/generative-ai";
@@ -20,7 +20,6 @@ export const sessionContext: sessionContextRecord = {};
 app.post("/setreference", authenticateJWT, setReference);
 
 app.post("/ask", async (req, res) => {
-  // console.log("Current Record:", sessionContext);
   const globalsearch = req.query.globalsearch as string;
   let suggestion = false;
   if (globalsearch === "true") {
